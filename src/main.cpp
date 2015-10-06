@@ -3,6 +3,8 @@
 #include "Vertices.h"
 #include "Shader.h"
 
+GLuint shaderProgram = 0;
+
 Vertex verts[]={
 //Front
 { -0.5f, 0.5f, 0.5f,
@@ -77,6 +79,16 @@ void initScene()
 	string fsPath = ASSET_PATH + SHADER_PATH + "/simpleFS.glsl";
 	fragmentShaderProgram = loadShaderFromFile(fsPath, FRAGMENT_SHADER);
 	checkForCompilerErrors(fragmentShaderProgram);
+
+	shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShaderProgram);
+	glAttachShader(shaderProgram, fragmentShaderProgram);
+	glLinkProgram(shaderProgram);
+	checkForLinkErrors(shaderProgram);
+
+	//now delete
+	glDeleteShader(vertexShaderProgram);
+	glDeleteShader(fragmentShaderProgram);
 
 
   glGenBuffers(1, &VBO);
