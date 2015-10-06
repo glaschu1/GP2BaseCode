@@ -1,6 +1,7 @@
 #include "Common.h"
 #include "Graphics.h"
 #include "Vertices.h"
+#include "Shader.h"
 
 Vertex verts[]={
 //Front
@@ -67,6 +68,17 @@ GLuint EBO;
 
 void initScene()
 {
+	GLuint vertexShaderProgram = 0;
+	string vsPath = ASSET_PATH + SHADER_PATH + "/simpleVS.glsl";
+	vertexShaderProgram = loadShaderFromFile(vsPath, VERTEX_SHADER);
+	checkForCompilerErrors(vertexShaderProgram);
+
+	GLuint fragmentShaderProgram = 0;
+	string fsPath = ASSET_PATH + SHADER_PATH + "/simpleFS.glsl";
+	fragmentShaderProgram = loadShaderFromFile(fsPath, FRAGMENT_SHADER);
+	checkForCompilerErrors(fragmentShaderProgram);
+
+
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
@@ -77,6 +89,8 @@ void initScene()
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   //Copy Index data to the EBO
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+  
 }
 
 void cleanUp()
@@ -94,9 +108,9 @@ void render()
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     //Swith to ModelView
-    glMatrixMode( GL_MODELVIEW );
+    //glMatrixMode( GL_MODELVIEW );
     //Reset using the Indentity Matrix
-    glLoadIdentity( );
+   /* glLoadIdentity( );
     gluLookAt(0.0, 0.0, 6.0, 0.0, 0.0, -1.0f, 0.0, 1.0, 0.0);
     glRotatef(xRotation,1.0f,0.0f,0.0f);
     glRotatef(yRotation,0.0f,1.0f,0.0f);
@@ -110,13 +124,13 @@ void render()
 
     glEnableClientState(GL_COLOR_ARRAY);
     glColorPointer(4, GL_FLOAT, sizeof(Vertex), (void**)(3*sizeof(float)));
-
+*/
     glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(GLuint),
     GL_UNSIGNED_INT,0);
 
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    //glDisableClientState(GL_VERTEX_ARRAY);
+    //glDisableClientState(GL_COLOR_ARRAY);
+    //glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 int main(int argc, char * arg[])
@@ -132,10 +146,12 @@ int main(int argc, char * arg[])
         return -1;
 	}
 
-	//Request opengl 4.1 context, Core Context
-	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_CORE);
-	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+	
+	//ask for ver 4.2 of openGl
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_CORE);
+
 
     //Create a window
     SDL_Window * window = SDL_CreateWindow(
