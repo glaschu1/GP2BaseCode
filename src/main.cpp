@@ -2,7 +2,6 @@
 #include "Graphics.h"
 #include "Vertices.h"
 #include "Shader.h"
-
 GLuint shaderProgram = 0;
 mat4 viewMatrix;
 mat4 projMatrix;
