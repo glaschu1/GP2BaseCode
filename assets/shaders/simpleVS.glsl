@@ -1,6 +1,6 @@
 #version 150
 
-in ver3 vertexPosition;
+in vec3 vertexPosition;
 
 uniform mat4 MVP;
 
