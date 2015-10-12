@@ -4,37 +4,30 @@
 #include "Shader.h"
 
 GLuint shaderProgram = 0;
-
-Vertex verts[]={
-//Front
-{ -0.5f, 0.5f, 0.5f,
-    1.0f, 0.0f, 1.0f, 1.0f },// Top Left
-
-{ -0.5f, -0.5f, 0.5f,
-    1.0f, 1.0f, 0.0f, 1.0f },// Bottom Left
-
-{ 0.5f, -0.5f, 0.5f,
-    0.0f, 1.0f, 1.0f, 1.0f }, //Bottom Right
-
-{ 0.5f, 0.5f, 0.5f,
-    1.0f, 0.0f, 1.0f, 1.0f },// Top Right
-
-
-//back
-{ -0.5f, 0.5f, -0.5f,
-    1.0f, 0.0f, 1.0f, 1.0f },// Top Left
-
-{ -0.5f, -0.5f, -0.5f,
-    1.0f, 1.0f, 0.0f, 1.0f },// Bottom Left
-
-{ 0.5f, -0.5f, -0.5f,
-    0.0f, 1.0f, 1.0f, 1.0f }, //Bottom Right
-
-{ 0.5f, 0.5f, -0.5f,
-    1.0f, 0.0f, 1.0f, 1.0f },// Top Right
-
+mat4 viewMatrix;
+mat4 projMatrix;
+mat4 worldMatrix;
+mat4 MVPMatrix;
+Vertex verts[] = {
+	//front
+		{ vec3(-0.5f, 0.5f, 0.5f),
+		vec4(1.0f, 0.0f, 1.0f, 1.0f) }, //top left
+		{ vec3(-0.5f, -0.5f, 0.5f),
+		vec4(1.0f, 1.0f, 0.0f, 1.0f) }, //bottom left
+		{ vec3(0.5f, -0.5f, 0.5f),
+		vec4(0.0f, 1.0f, 1.0f, 1.0f) }, //bottom right
+		{ vec3(0.5f, 0.5f, 0.5f),
+		vec4(1.0f, 0.0f, 1.0f, 1.0f) }, //top right
+		//back
+		{ vec3(-0.5f, 0.5f, -0.5f),
+		vec4(1.0f, 0.0f, 1.0f, 1.0f) }, //top left 
+		{ vec3(-0.5f, -0.5f, -0.5f),
+		vec4(1.0f, 1.0f, 0.0f, 1.0f) }, //bottom left 
+		{ vec3(0.5f, -0.5f, -0.5f),
+		vec4(0.0f, 0.5f, 0.5f, 0.5f) }, //bottom right
+		{ vec3(0.5f, 0.5f, -0.5f),
+		vec4(1.0f, 0.0f, 1.0f, 1.0f) }, //top right 
 };
-
 GLuint indices[]={
     //front
     0,1,2,
@@ -67,9 +60,34 @@ float zRotation=0.0f;
 
 GLuint VBO;
 GLuint EBO;
-
+GLuint VAO;
+void update()
+{
+	projMatrix = perspective(45.0f, 640.0f / 480.0f, 0.1f, 100.0f);
+	viewMatrix = lookAt(vec3(0.0f, 0.0f, 10.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	worldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f));
+	MVPMatrix = projMatrix*viewMatrix*worldMatrix;
+}
 void initScene()
 {
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+
+	//create buffer
+	glGenBuffers(1, &EBO);
+	//Make the EBO active
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	//Copy Index data to the EBO
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	//tell the shader that 0 is the position element 
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
+
 	GLuint vertexShaderProgram = 0;
 	string vsPath = ASSET_PATH + SHADER_PATH + "/simpleVS.glsl";
 	vertexShaderProgram = loadShaderFromFile(vsPath, VERTEX_SHADER);
@@ -90,23 +108,17 @@ void initScene()
 	glDeleteShader(vertexShaderProgram);
 	glDeleteShader(fragmentShaderProgram);
 
+	glBindAttribLocation(shaderProgram, 0, "vertexPosition");
 
-  glGenBuffers(1, &VBO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
-
-  //create buffer
-  glGenBuffers(1, &EBO);
-  //Make the EBO active
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  //Copy Index data to the EBO
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+  
 
   
 }
 
 void cleanUp()
 {
+	glDeleteProgram(shaderProgram);
+	glDeleteVertexArrays(1, &VBO);
   glDeleteBuffers(1, &EBO);
   glDeleteBuffers(1, &VBO);
 }
@@ -119,30 +131,15 @@ void render()
     //clear the colour and depth buffer
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    //Swith to ModelView
-    //glMatrixMode( GL_MODELVIEW );
-    //Reset using the Indentity Matrix
-   /* glLoadIdentity( );
-    gluLookAt(0.0, 0.0, 6.0, 0.0, 0.0, -1.0f, 0.0, 1.0, 0.0);
-    glRotatef(xRotation,1.0f,0.0f,0.0f);
-    glRotatef(yRotation,0.0f,1.0f,0.0f);
-    glRotatef(zRotation,0.0f,0.0f,1.0f);
+	glUseProgram(shaderProgram);
+	glBindVertexArray(VBO);
+	
+	GLint MVPLocation = glGetUniformLocation(shaderProgram, "MVP");
+	glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, sizeof(Vertex), 0);
-
-    glEnableClientState(GL_COLOR_ARRAY);
-    glColorPointer(4, GL_FLOAT, sizeof(Vertex), (void**)(3*sizeof(float)));
-*/
     glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(GLuint),
     GL_UNSIGNED_INT,0);
 
-    //glDisableClientState(GL_VERTEX_ARRAY);
-    //glDisableClientState(GL_COLOR_ARRAY);
-    //glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 int main(int argc, char * arg[])

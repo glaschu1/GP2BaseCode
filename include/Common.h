@@ -12,14 +12,14 @@ using namespace std;
 #include <SDL.h>
 #include <SDL_opengl.h>
 
+//MATHS
+#include <glm.hpp>
+using namespace glm;
+#include <gtc\matrix_transform.hpp>
+#include <gtc\type_ptr.hpp>
 const string ASSET_PATH = "assets";
 const string SHADER_PATH = "/shaders";
 
-//#ifdef __APPLE__
-//#include <OpenGL/glu.h>
-//#elif WIN32
-//#include <gl\GLU.h>
-//#endif
 
 
 #endif
