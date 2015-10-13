@@ -2,6 +2,7 @@
 #include "Graphics.h"
 #include "Vertices.h"
 #include "Shader.h"
+
 GLuint shaderProgram = 0;
 mat4 viewMatrix;
 mat4 projMatrix;
@@ -10,22 +11,22 @@ mat4 MVPMatrix;
 Vertex verts[] = {
 	//front
 		{ vec3(-0.5f, 0.5f, 0.5f),
-		vec4(1.0f, 0.0f, 1.0f, 1.0f) }, //top left
+		vec4(1.0f, 0.0f, 1.0f, 1.0f),vec2(0.0f,0.0f) }, //top left
 		{ vec3(-0.5f, -0.5f, 0.5f),
-		vec4(1.0f, 1.0f, 0.0f, 1.0f) }, //bottom left
+		vec4(1.0f, 1.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f) }, //bottom left
 		{ vec3(0.5f, -0.5f, 0.5f),
-		vec4(0.0f, 1.0f, 1.0f, 1.0f) }, //bottom right
+		vec4(0.0f, 1.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f) }, //bottom right
 		{ vec3(0.5f, 0.5f, 0.5f),
-		vec4(1.0f, 0.0f, 1.0f, 1.0f) }, //top right
+		vec4(1.0f, 0.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f) }, //top right
 		//back
 		{ vec3(-0.5f, 0.5f, -0.5f),
-		vec4(1.0f, 0.0f, 1.0f, 1.0f) }, //top left 
+		vec4(1.0f, 0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f) }, //top left 
 		{ vec3(-0.5f, -0.5f, -0.5f),
-		vec4(1.0f, 1.0f, 0.0f, 1.0f) }, //bottom left 
+		vec4(1.0f, 1.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f) }, //bottom left 
 		{ vec3(0.5f, -0.5f, -0.5f),
-		vec4(0.0f, 0.5f, 0.5f, 0.5f) }, //bottom right
+		vec4(0.0f, 0.5f, 0.5f, 0.5f), vec2(1.0f, 1.0f) }, //bottom right
 		{ vec3(0.5f, 0.5f, -0.5f),
-		vec4(1.0f, 0.0f, 1.0f, 1.0f) }, //top right 
+		vec4(1.0f, 0.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f) }, //top right 
 };
 GLuint indices[]={
     //front
@@ -86,6 +87,9 @@ void initScene()
 	//tell the shader that 0 is the position element 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
+	//ask
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void**)sizeof(vec4));
 
 	GLuint vertexShaderProgram = 0;
 	string vsPath = ASSET_PATH + SHADER_PATH + "/simpleVS.glsl";
@@ -149,11 +153,16 @@ int main(int argc, char * arg[])
     // init everyting - SDL, if it is nonzero we have a problem
     if(SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
-        std::cout << "ERROR SDL_Init " <<SDL_GetError()<< std::endl;
+        std::cout << "ERROR SDL_Init " <<SDL_GetError() << std::endl;
 
         return -1;
 	}
 
+	int  imageInitFlags = IMG_INIT_JPG | IMG_INIT_PNG;
+	int  returnInitFlasgs = IMG_Init(imageInitFlags);
+	if (((returnInitFlasgs)&(imageInitFlags)) != imageInitFlags){
+		cout << "ERROR SDL_IMAGE Init" << IMG_GetError() << endl;
+	}
 	
 	//ask for ver 4.2 of openGl
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -235,6 +244,7 @@ int main(int argc, char * arg[])
     cleanUp();
     SDL_GL_DeleteContext(glcontext);
     SDL_DestroyWindow(window);
+	IMG_Quit();
     SDL_Quit();
 
     return 0;
