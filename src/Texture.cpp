@@ -56,3 +56,22 @@ GLuint convertSDLSurfaceToTexture(SDL_Surface * surface)
 
 	return textureID;
 }
+
+GLuint	loadTextureFromFont(const string& fontFilename, int pointSize, const string& text)
+{
+  TTF_Font * font = TTF_OpenFont(fontFilename.c_str(), pointSize);
+  if (!font)
+  {
+    cout << "Unable to load font	" << fontFilename << "	" << TTF_GetError();
+    return	0;
+  }
+  SDL_Surface	*textSurface = TTF_RenderText_Blended(font, text.c_str(),
+  { 255, 255, 255 });
+  
+  GLuint textureID = convertSDLSurfaceToTexture(textSurface);
+  SDL_FreeSurface(textSurface);
+  
+  TTF_CloseFont(font);
+  
+  return textureID;
+}

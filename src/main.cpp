@@ -70,15 +70,26 @@ GLuint VBO;
 GLuint EBO;
 GLuint VAO;
 GLuint shaderProgram;
-
+GLuint fontTexture;
 GLuint diffuseMap;
 
 void initScene()
-{
-	//load texture & bind
+{//load font
+  string fontPath =ASSET_PATH + FONT_PATH + "/OratorStd.otf";
+  fontTexture=loadTextureFromFont(fontPath,10,"Hello");
+  
+  glBindTexture(GL_TEXTURE_2D, fontTexture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+  
+	
+  
+  //load texture & bind
 	string texturePath = ASSET_PATH + TEXTURE_PATH + "/texture.png";
 	diffuseMap = loadTextureFromFile(texturePath);
-
 	glBindTexture(GL_TEXTURE_2D, diffuseMap);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -138,6 +149,7 @@ void initScene()
 
 void cleanUp()
 {
+  glDeleteTextures(1,&fontTexture);
 	glDeleteTextures(1, &diffuseMap);
 	glDeleteProgram(shaderProgram);
 	glDeleteBuffers(1, &EBO);
@@ -165,12 +177,16 @@ void render()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(shaderProgram);
+  
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 
 	GLint MVPLocation = glGetUniformLocation(shaderProgram, "MVP");
 	GLint texture0Location = glGetUniformLocation(shaderProgram, "texture0");
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, diffuseMap);
+	glBindTexture(GL_TEXTURE_2D, fontTexture);//diffuseMap
 
 	glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
 	glUniform1i(texture0Location, 0);
@@ -200,6 +216,11 @@ int main(int argc, char * arg[])
 
 		cout << "ERROR	SDL_Image	Init	" << IMG_GetError() << endl;
 	}
+  
+  if (TTF_Init() == -1)	{
+    std::cout << "ERROR	TTF_Init: " << TTF_GetError();
+  }
+  
 
 	//Request opengl 4.1 context, Core Context
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -266,6 +287,8 @@ int main(int argc, char * arg[])
 	cleanUp();
 	SDL_GL_DeleteContext(glcontext);
 	SDL_DestroyWindow(window);
+  IMG_Quit();
+  TTF_Quit();
 	SDL_Quit();
 
 	return 0;
