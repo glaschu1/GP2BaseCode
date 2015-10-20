@@ -3,6 +3,8 @@
 #include "Vertices.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "FileSystem.h"
+
 
 Vertex verts[] = {
 	//Front
@@ -76,7 +78,7 @@ GLuint diffuseMap;
 void initScene()
 {//load font
   string fontPath =ASSET_PATH + FONT_PATH + "/OratorStd.otf";
-  fontTexture=loadTextureFromFont(fontPath,10,"Hello");
+  fontTexture=loadTextureFromFont(fontPath,18,"Hello world");
   
   glBindTexture(GL_TEXTURE_2D, fontTexture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
@@ -127,7 +129,7 @@ void initScene()
 	checkForCompilerErrors(vertexShaderProgram);
 
 	GLuint fragmentShaderProgram = 0;
-	string fsPath = ASSET_PATH + SHADER_PATH + "/textureFS.glsl";
+	string fsPath = ASSET_PATH + SHADER_PATH + "/textureFS.glsl";//
 	fragmentShaderProgram = loadShaderFromFile(fsPath, FRAGMENT_SHADER);
 	checkForCompilerErrors(fragmentShaderProgram);
 
@@ -161,7 +163,7 @@ void update()
 {
 	projMatrix = glm::perspective(45.0f, 640.0f / 480.0f, 0.1f, 100.0f);
 
-	viewMatrix = glm::lookAt(vec3(0.0f, 0.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	viewMatrix = glm::lookAt(vec3(0.0f, 0.0f, 5.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 
 	worldMatrix = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f));
 
@@ -199,6 +201,7 @@ void render()
 int main(int argc, char * arg[])
 {
 
+  ChangeWorkingDirectory();
 	//Controls the game loop
 	bool run = true;
 
@@ -262,7 +265,7 @@ int main(int argc, char * arg[])
 				switch (event.key.keysym.sym)
 				{
 				case SDLK_LEFT:
-					break;
+          break;
 				case SDLK_RIGHT:
 					break;
 				case SDLK_UP:
