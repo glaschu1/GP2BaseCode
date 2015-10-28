@@ -7,13 +7,14 @@
 #include "FileSystem.h"
 #include "FBXLoader.h"
 
-
-
+vec4 ambientMaterialColour = {0.3f,0.3f,0.3f,1.0f};
+vec4 ambientLightColour = {1.0f,1.0f,1.0f,1.0f};
 //matrices
 mat4 viewMatrix;
 mat4 projMatrix;
 mat4 worldMatrix;
 mat4 MVPMatrix;
+mat4 modelMatrix;
 
 GLuint VBO;
 GLuint EBO;
@@ -26,7 +27,7 @@ MeshData currentMesh;
 
 void initScene()
 {//load font
-  string modelPath = ASSET_PATH + MODEL_PATH + "/armoredrecon.fbx";
+  string modelPath = ASSET_PATH + MODEL_PATH + "/Utah-Teapot.fbx";
   loadFBXFromFile(modelPath, &currentMesh);
   string fontPath =ASSET_PATH + FONT_PATH + "/OratorStd.otf";
   fontTexture=loadTextureFromFont(fontPath,18,"Hello world");
@@ -80,12 +81,12 @@ void initScene()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void**)(sizeof(vec3) + sizeof(vec4)));
 
 	GLuint vertexShaderProgram = 0;
-	string vsPath = ASSET_PATH + SHADER_PATH + "/simpleVS.glsl";
+	string vsPath = ASSET_PATH + SHADER_PATH + "/ambientVS.glsl";
 	vertexShaderProgram = loadShaderFromFile(vsPath, VERTEX_SHADER);
 	checkForCompilerErrors(vertexShaderProgram);
 
 	GLuint fragmentShaderProgram = 0;
-	string fsPath = ASSET_PATH + SHADER_PATH + "/simpleFS.glsl";//
+	string fsPath = ASSET_PATH + SHADER_PATH + "/ambientFS.glsl";//
 	fragmentShaderProgram = loadShaderFromFile(fsPath, FRAGMENT_SHADER);
 	checkForCompilerErrors(fragmentShaderProgram);
 
@@ -119,7 +120,7 @@ void update()
 {
 	projMatrix = glm::perspective(45.0f, 640.0f / 480.0f, 0.1f, 100.0f);
 
-	viewMatrix = glm::lookAt(vec3(0.0f, 0.0f, 5.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	viewMatrix = glm::lookAt(vec3(0.0f, 0.0f, 50.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 
 	worldMatrix = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f));
 
