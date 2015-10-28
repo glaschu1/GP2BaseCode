@@ -3,64 +3,11 @@
 #include "Vertices.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "Mesh.h"
 #include "FileSystem.h"
+#include "FBXLoader.h"
 
 
-Vertex verts[] = {
-	//Front
-	{ vec3(-0.5f, 0.5f, 0.5f),
-	vec4(1.0f, 0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f) },// Top Left
-
-	{ vec3(-0.5f, -0.5f, 0.5f),
-	vec4(1.0f, 1.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f) },// Bottom Left
-
-	{ vec3(0.5f, -0.5f, 0.5f),
-	vec4(0.0f, 1.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f) }, //Bottom Right
-
-	{ vec3(0.5f, 0.5f, 0.5f),
-	vec4(1.0f, 0.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f) },// Top Right
-
-
-	//back
-	{ vec3(-0.5f, 0.5f, -0.5f),
-	vec4(1.0f, 0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f) },// Top Left
-
-	{ vec3(-0.5f, -0.5f, -0.5f),
-	vec4(1.0f, 1.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f) },// Bottom Left
-
-	{ vec3(0.5f, -0.5f, -0.5f),
-	vec4(0.0f, 1.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f) }, //Bottom Right
-
-	{ vec3(0.5f, 0.5f, -0.5f),
-	vec4(1.0f, 0.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f) },// Top Right
-
-};
-
-GLuint indices[] = {
-	//front
-	0, 1, 2,
-	0, 3, 2,
-
-	//left
-	4, 5, 1,
-	4, 1, 0,
-
-	//right
-	3, 7, 2,
-	7, 6, 2,
-
-	//bottom
-	1, 5, 2,
-	6, 2, 5,
-
-	//top
-	4, 0, 7,
-	0, 7, 3,
-
-	//back
-	4, 5, 6,
-	4, 7, 6
-};
 
 //matrices
 mat4 viewMatrix;
@@ -75,8 +22,12 @@ GLuint shaderProgram;
 GLuint fontTexture;
 GLuint diffuseMap;
 
+MeshData currentMesh;
+
 void initScene()
 {//load font
+  string modelPath = ASSET_PATH + MODEL_PATH + "/armoredrecon.fbx";
+  loadFBXFromFile(modelPath, &currentMesh);
   string fontPath =ASSET_PATH + FONT_PATH + "/OratorStd.otf";
   fontTexture=loadTextureFromFont(fontPath,18,"Hello world");
   
@@ -104,14 +55,19 @@ void initScene()
 	glBindVertexArray(VAO);
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+  
+  glBufferData(GL_ARRAY_BUFFER, currentMesh.getNumVerts()*sizeof(Vertex),
+               &currentMesh.vertices[0], GL_STATIC_DRAW);
 
 	//create buffer
 	glGenBuffers(1, &EBO);
 	//Make the EBO active
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	//Copy Index data to the EBO
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+               currentMesh.getNumIndices()*sizeof(int),
+               &currentMesh.indices[0], GL_STATIC_DRAW);
+	
 
 	//Tell the shader that 0 is the position element
 	glEnableVertexAttribArray(0);
@@ -124,12 +80,12 @@ void initScene()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void**)(sizeof(vec3) + sizeof(vec4)));
 
 	GLuint vertexShaderProgram = 0;
-	string vsPath = ASSET_PATH + SHADER_PATH + "/textureVS.glsl";
+	string vsPath = ASSET_PATH + SHADER_PATH + "/simpleVS.glsl";
 	vertexShaderProgram = loadShaderFromFile(vsPath, VERTEX_SHADER);
 	checkForCompilerErrors(vertexShaderProgram);
 
 	GLuint fragmentShaderProgram = 0;
-	string fsPath = ASSET_PATH + SHADER_PATH + "/textureFS.glsl";//
+	string fsPath = ASSET_PATH + SHADER_PATH + "/simpleFS.glsl";//
 	fragmentShaderProgram = loadShaderFromFile(fsPath, FRAGMENT_SHADER);
 	checkForCompilerErrors(fragmentShaderProgram);
 
@@ -180,22 +136,24 @@ void render()
 
 	glUseProgram(shaderProgram);
   
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glEnable(GL_BLEND);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
 	GLint MVPLocation = glGetUniformLocation(shaderProgram, "MVP");
-	GLint texture0Location = glGetUniformLocation(shaderProgram, "texture0");
+	//GLint texture0Location = glGetUniformLocation(shaderProgram, "texture0");
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, fontTexture);//diffuseMap
+	//glActiveTexture(GL_TEXTURE0);
+//	glBindTexture(GL_TEXTURE_2D, fontTexture);//diffuseMap
 
 	glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
-	glUniform1i(texture0Location, 0);
+	//glUniform1i(texture0Location, 0);
 
 	glBindVertexArray(VAO);
+  glDrawElements(GL_TRIANGLES, currentMesh.getNumIndices(),
+                 GL_UNSIGNED_INT, 0);
 
-	glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
+	
 }
 
 int main(int argc, char * arg[])
