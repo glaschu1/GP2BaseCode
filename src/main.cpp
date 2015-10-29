@@ -9,6 +9,13 @@
 
 vec4 ambientMaterialColour = {0.3f,0.3f,0.3f,1.0f};
 vec4 ambientLightColour = {1.0f,1.0f,1.0f,1.0f};
+vec4 diffuseMaterialColour = {0.3f,0.3f,0.3f,1.0f};
+vec4 diffuseLightColour={1.0f,1.0f,1.0f,1.0f};
+vec3 lightDirection={0.0f,0.0f,1.0f};
+vec3 cameraPosition = vec3(0.0f, 0.0f, 50.0f);
+vec4 specularMaterialColour={0.3f,0.3f,0.3f,1.0f};
+vec4 specularLightColour={1.0f,1.0f,1.0f,1.0f};
+float specularPower = 1.0f;
 //matrices
 mat4 viewMatrix;
 mat4 projMatrix;
@@ -79,14 +86,19 @@ void initScene()
 
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void**)(sizeof(vec3) + sizeof(vec4)));
+  
+  //send the normals to the buffer
+  glEnableVertexAttribArray(3);
+  glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void**)(sizeof(vec3) + sizeof(vec4) + sizeof(vec2)));
+
 
 	GLuint vertexShaderProgram = 0;
-	string vsPath = ASSET_PATH + SHADER_PATH + "/ambientVS.glsl";
+	string vsPath = ASSET_PATH + SHADER_PATH + "/specularVS.glsl";//ambient
 	vertexShaderProgram = loadShaderFromFile(vsPath, VERTEX_SHADER);
 	checkForCompilerErrors(vertexShaderProgram);
 
 	GLuint fragmentShaderProgram = 0;
-	string fsPath = ASSET_PATH + SHADER_PATH + "/ambientFS.glsl";//
+	string fsPath = ASSET_PATH + SHADER_PATH + "/specularFS.glsl";//
 	fragmentShaderProgram = loadShaderFromFile(fsPath, FRAGMENT_SHADER);
 	checkForCompilerErrors(fragmentShaderProgram);
 
@@ -98,6 +110,7 @@ void initScene()
 	glBindAttribLocation(shaderProgram, 0, "vertexPosition");
 	glBindAttribLocation(shaderProgram, 1, "vertexColour");
 	glBindAttribLocation(shaderProgram, 2, "vertexTexCoords");
+  glBindAttribLocation(shaderProgram, 3, "vertexNormal");
 
 	glLinkProgram(shaderProgram);
 	checkForLinkErrors(shaderProgram);
@@ -120,7 +133,7 @@ void update()
 {
 	projMatrix = glm::perspective(45.0f, 640.0f / 480.0f, 0.1f, 100.0f);
 
-	viewMatrix = glm::lookAt(vec3(0.0f, 0.0f, 50.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	viewMatrix = glm::lookAt(vec3(cameraPosition), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 
 	worldMatrix = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f));
 
@@ -137,19 +150,38 @@ void render()
 
 	glUseProgram(shaderProgram);
   
-  //glEnable(GL_BLEND);
-  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //get the uniform loaction for the MVP
+  GLint MVPLocation = glGetUniformLocation(shaderProgram, "MVP");
+  glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
+  
+  //get the model matrix uniform
+  GLint modelLocation = glGetUniformLocation(shaderProgram, "Model");
+  glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(worldMatrix));
+  
+  GLint AMCLocation = glGetUniformLocation(shaderProgram, "ambientMaterialColour");
+  glUniform4fv(AMCLocation, 1,  glm::value_ptr(ambientMaterialColour));
+  
+  GLint ALCLocation = glGetUniformLocation(shaderProgram, "ambientLightColour");
+  glUniform4fv(ALCLocation, 1,  glm::value_ptr(ambientLightColour));
+	
+  GLint DMCLocation = glGetUniformLocation(shaderProgram, "diffuseMaterialColour");
+    glUniform4fv(DMCLocation, 1,  glm::value_ptr(diffuseMaterialColour));
+  GLint DLCLocation = glGetUniformLocation(shaderProgram, "diffuseLightColour");
+   glUniform4fv(DLCLocation, 1,  glm::value_ptr(diffuseLightColour));
+  GLint SMCLocation = glGetUniformLocation(shaderProgram, "specularMaterialColour");
+  glUniform4fv(SMCLocation, 1,  glm::value_ptr(specularMaterialColour));
+  GLint SLCLocation = glGetUniformLocation(shaderProgram, "specularLightColour");
+  glUniform4fv(SLCLocation, 1,  glm::value_ptr(specularLightColour));
+  GLint SpecPowerLocation = glGetUniformLocation(shaderProgram, "specularPower");
+  glUniform1f(SpecPowerLocation, specularPower);
 
-
-	GLint MVPLocation = glGetUniformLocation(shaderProgram, "MVP");
-	//GLint texture0Location = glGetUniformLocation(shaderProgram, "texture0");
-
-	//glActiveTexture(GL_TEXTURE0);
-//	glBindTexture(GL_TEXTURE_2D, fontTexture);//diffuseMap
-
-	glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
-	//glUniform1i(texture0Location, 0);
-
+	
+  //get the uniform for the texture coords
+  /*GLint texture0Location = glGetUniformLocation(shaderProgram, "texture0");
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, diffuseMap);
+  glUniform1i(texture0Location, 0);
+*/
 	glBindVertexArray(VAO);
   glDrawElements(GL_TRIANGLES, currentMesh.getNumIndices(),
                  GL_UNSIGNED_INT, 0);
