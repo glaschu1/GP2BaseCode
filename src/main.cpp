@@ -7,12 +7,14 @@
 #include "FileSystem.h"
 #include "FBXLoader.h"
 
+
+vec3 rotationAngle = {0.0f, 0.0f, 0.0f};
 vec4 ambientMaterialColour = {0.3f,0.3f,0.3f,1.0f};
 vec4 ambientLightColour = {1.0f,1.0f,1.0f,1.0f};
 vec4 diffuseMaterialColour = {0.3f,0.3f,0.3f,1.0f};
 vec4 diffuseLightColour={1.0f,1.0f,1.0f,1.0f};
 vec3 lightDirection={0.0f,0.0f,1.0f};
-vec3 cameraPosition = vec3(0.0f, 0.0f, 50.0f);
+vec3 cameraPosition = {0.0f, 0.0f, 50.0f};
 vec4 specularMaterialColour={0.3f,0.3f,0.3f,1.0f};
 vec4 specularLightColour={1.0f,1.0f,1.0f,1.0f};
 float specularPower = 1.0f;
@@ -22,6 +24,7 @@ mat4 projMatrix;
 mat4 worldMatrix;
 mat4 MVPMatrix;
 mat4 modelMatrix;
+mat4 rotationMatrix;
 
 GLuint VBO;
 GLuint EBO;
@@ -131,13 +134,27 @@ void cleanUp()
 
 void update()
 {
+  rotationMatrix =
+		mat4(cos(rotationAngle.z), -sin(rotationAngle.z), 0, 0,
+         sin(rotationAngle.z), cos(rotationAngle.z), 0, 0,
+         0, 0, 1, 0,
+         0, 0, 0, 1) *
+		mat4(cos(rotationAngle.y), 0, sin(rotationAngle.y), 0,
+         0, 1, 0, 0,
+         -sin(rotationAngle.y), 0, cos(rotationAngle.y), 0,
+         0, 0, 0, 1) *
+		mat4(1, 0, 0, 0,
+         0, cos(rotationAngle.x), -sin(rotationAngle.x), 0,
+         0, sin(rotationAngle.x), cos(rotationAngle.x), 0,
+         0, 0, 0, 1);
+  
 	projMatrix = glm::perspective(45.0f, 640.0f / 480.0f, 0.1f, 100.0f);
 
 	viewMatrix = glm::lookAt(vec3(cameraPosition), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 
 	worldMatrix = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f));
 
-	MVPMatrix = projMatrix*viewMatrix*worldMatrix;
+	MVPMatrix = projMatrix*viewMatrix*worldMatrix*rotationMatrix;
 }
 
 void render()
@@ -163,6 +180,9 @@ void render()
   
   GLint ALCLocation = glGetUniformLocation(shaderProgram, "ambientLightColour");
   glUniform4fv(ALCLocation, 1,  glm::value_ptr(ambientLightColour));
+  
+  GLint lightDirLocation = glGetUniformLocation(shaderProgram, "lightDirection");
+  glUniform3fv(lightDirLocation, 1, value_ptr(lightDirection));
 	
   GLint DMCLocation = glGetUniformLocation(shaderProgram, "diffuseMaterialColour");
     glUniform4fv(DMCLocation, 1,  glm::value_ptr(diffuseMaterialColour));
@@ -256,13 +276,49 @@ int main(int argc, char * arg[])
 				switch (event.key.keysym.sym)
 				{
 				case SDLK_LEFT:
+             lightDirection.x +=-1.0f;
+             cout << "lkey " << endl;
           break;
 				case SDLK_RIGHT:
+            lightDirection.x +=1.0f;
+              cout << "rkey " << endl;
 					break;
 				case SDLK_UP:
+            lightDirection.y +=1.0f;
 					break;
 				case SDLK_DOWN:
+            lightDirection.y +=-1.0f;
 					break;
+          case SDLK_n:
+            lightDirection.z +=1.0f;
+            break;
+          case SDLK_m:
+            lightDirection.z +=-1.0f;
+            break;
+          case SDLK_d:
+            rotationAngle.z += 1.0f;
+            cout << "d key " << endl;
+            break;
+          case SDLK_a:
+            rotationAngle.z += -1.0f;
+            cout << "a key " << endl;
+            break;
+          case SDLK_q:
+            rotationAngle.y += 1.0f;
+            cout << "q key " << endl;
+            break;
+          case SDLK_e:
+            rotationAngle.y += -1.0f;
+            cout << "e key " << endl;
+            break;
+          case SDLK_w:
+            rotationAngle.x += 1.0f;
+            cout << "w key " << endl;
+            break;
+          case SDLK_s:
+            rotationAngle.x += -1.0f;
+            cout << "s key " << endl;
+            break;
 				default:
 					break;
 				}
