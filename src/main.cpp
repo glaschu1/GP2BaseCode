@@ -295,11 +295,11 @@ int main(int argc, char * arg[])
 				{
 				case SDLK_LEFT:
              lightData.direction.x +=-1.0f;
-             cout << "lkey " << endl;
+         
           break;
 				case SDLK_RIGHT:
             lightData.direction.x +=1.0f;
-              cout << "rkey " << endl;
+            
 					break;
 				case SDLK_UP:
             lightData.direction.y +=1.0f;
@@ -307,36 +307,30 @@ int main(int argc, char * arg[])
 				case SDLK_DOWN:
             lightData.direction.y +=-1.0f;
 					break;
-          case SDLK_n:
+        case SDLK_n:
             lightData.direction.z +=1.0f;
-            break;
-          case SDLK_m:
+          break;
+        case SDLK_m:
             lightData.direction.z +=-1.0f;
-            break;
-          case SDLK_d:
+          break;
+        case SDLK_d:
             rotationAngle.z += 1.0f;
-            cout << "d key " << endl;
-            break;
-          case SDLK_a:
+          break;
+        case SDLK_a:
             rotationAngle.z += -1.0f;
-            cout << "a key " << endl;
-            break;
-          case SDLK_q:
+          break;
+        case SDLK_q:
             rotationAngle.y += 1.0f;
-            cout << "q key " << endl;
-            break;
-          case SDLK_e:
+          break;
+        case SDLK_e:
             rotationAngle.y += -1.0f;
-            cout << "e key " << endl;
-            break;
-          case SDLK_w:
+          break;
+        case SDLK_w:
             rotationAngle.x += 1.0f;
-            cout << "w key " << endl;
-            break;
-          case SDLK_s:
+          break;
+        case SDLK_s:
             rotationAngle.x += -1.0f;
-            cout << "s key " << endl;
-            break;
+          break;
 				default:
 					break;
 				}
