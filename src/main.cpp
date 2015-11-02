@@ -6,17 +6,15 @@
 #include "Mesh.h"
 #include "FileSystem.h"
 #include "FBXLoader.h"
+#include "Light.h"
+#include "Material.h"
+
 
 
 vec3 rotationAngle = {0.0f, 0.0f, 0.0f};
-vec4 ambientMaterialColour = {0.3f,0.3f,0.3f,1.0f};
-vec4 ambientLightColour = {1.0f,1.0f,1.0f,1.0f};
-vec4 diffuseMaterialColour = {0.3f,0.3f,0.3f,1.0f};
-vec4 diffuseLightColour={1.0f,1.0f,1.0f,1.0f};
-vec3 lightDirection={0.0f,0.0f,1.0f};
+
 vec3 cameraPosition = {0.0f, 0.0f, 50.0f};
-vec4 specularMaterialColour={0.3f,0.3f,0.3f,1.0f};
-vec4 specularLightColour={1.0f,1.0f,1.0f,1.0f};
+
 float specularPower = 1.0f;
 //matrices
 mat4 viewMatrix;
@@ -25,6 +23,11 @@ mat4 worldMatrix;
 mat4 MVPMatrix;
 mat4 modelMatrix;
 mat4 rotationMatrix;
+
+//
+LightData lightData;
+MaterialData materialData;
+
 
 GLuint VBO;
 GLuint EBO;
@@ -120,6 +123,17 @@ void initScene()
 	//now we can delete the VS & FS Programs
 	glDeleteShader(vertexShaderProgram);
 	glDeleteShader(fragmentShaderProgram);
+  
+  //init material
+  lightData.direction = vec3(0.0f, 0.0f, 1.0f);
+  lightData.ambientColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+  lightData.diffuseColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+  lightData.specularColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+  
+  //int light
+  materialData.ambientColour = vec4(0.3f, 0.3f, 0.3, 1.0f);
+  materialData.diffuseColour = vec4(0.3f, 0.3f, 0.3, 1.0f);
+  materialData.specularColour = vec4(0.3f, 0.3f, 0.3, 1.0f);
 }
 
 void cleanUp()
@@ -176,22 +190,26 @@ void render()
   glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(worldMatrix));
   
   GLint AMCLocation = glGetUniformLocation(shaderProgram, "ambientMaterialColour");
-  glUniform4fv(AMCLocation, 1,  glm::value_ptr(ambientMaterialColour));
+  glUniform4fv(AMCLocation, 1,  glm::value_ptr(materialData.ambientColour));
   
   GLint ALCLocation = glGetUniformLocation(shaderProgram, "ambientLightColour");
-  glUniform4fv(ALCLocation, 1,  glm::value_ptr(ambientLightColour));
+  glUniform4fv(ALCLocation, 1,  glm::value_ptr(lightData.ambientColour));
   
   GLint lightDirLocation = glGetUniformLocation(shaderProgram, "lightDirection");
-  glUniform3fv(lightDirLocation, 1, value_ptr(lightDirection));
+  glUniform3fv(lightDirLocation, 1, value_ptr(lightData.direction));
 	
   GLint DMCLocation = glGetUniformLocation(shaderProgram, "diffuseMaterialColour");
-    glUniform4fv(DMCLocation, 1,  glm::value_ptr(diffuseMaterialColour));
+    glUniform4fv(DMCLocation, 1,  glm::value_ptr(materialData.diffuseColour));
+  
   GLint DLCLocation = glGetUniformLocation(shaderProgram, "diffuseLightColour");
-   glUniform4fv(DLCLocation, 1,  glm::value_ptr(diffuseLightColour));
+   glUniform4fv(DLCLocation, 1,  glm::value_ptr(lightData.diffuseColour));
+  
   GLint SMCLocation = glGetUniformLocation(shaderProgram, "specularMaterialColour");
-  glUniform4fv(SMCLocation, 1,  glm::value_ptr(specularMaterialColour));
+  glUniform4fv(SMCLocation, 1,  glm::value_ptr(materialData.specularColour));
+  
   GLint SLCLocation = glGetUniformLocation(shaderProgram, "specularLightColour");
-  glUniform4fv(SLCLocation, 1,  glm::value_ptr(specularLightColour));
+  glUniform4fv(SLCLocation, 1,  glm::value_ptr(lightData.specularColour));
+  
   GLint SpecPowerLocation = glGetUniformLocation(shaderProgram, "specularPower");
   glUniform1f(SpecPowerLocation, specularPower);
 
@@ -276,24 +294,24 @@ int main(int argc, char * arg[])
 				switch (event.key.keysym.sym)
 				{
 				case SDLK_LEFT:
-             lightDirection.x +=-1.0f;
+             lightData.direction.x +=-1.0f;
              cout << "lkey " << endl;
           break;
 				case SDLK_RIGHT:
-            lightDirection.x +=1.0f;
+            lightData.direction.x +=1.0f;
               cout << "rkey " << endl;
 					break;
 				case SDLK_UP:
-            lightDirection.y +=1.0f;
+            lightData.direction.y +=1.0f;
 					break;
 				case SDLK_DOWN:
-            lightDirection.y +=-1.0f;
+            lightData.direction.y +=-1.0f;
 					break;
           case SDLK_n:
-            lightDirection.z +=1.0f;
+            lightData.direction.z +=1.0f;
             break;
           case SDLK_m:
-            lightDirection.z +=-1.0f;
+            lightData.direction.z +=-1.0f;
             break;
           case SDLK_d:
             rotationAngle.z += 1.0f;
