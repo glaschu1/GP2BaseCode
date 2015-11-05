@@ -8,7 +8,12 @@
 #include "FBXLoader.h"
 #include "Light.h"
 #include "Material.h"
-
+float vertices[]	={
+  -1,	-1,
+  1,	-1,
+  -1,	1,
+  1,	1,
+};
 
 
 vec3 rotationAngle = {0.0f, 0.0f, 0.0f};
@@ -28,7 +33,6 @@ mat4 rotationMatrix;
 LightData lightData;
 MaterialData materialData;
 
-
 GLuint VBO;
 GLuint EBO;
 GLuint VAO;
@@ -38,8 +42,189 @@ GLuint diffuseMap;
 
 MeshData currentMesh;
 
+GLuint FBOTexture;
+GLuint FBODepthBuffer;
+GLuint frameBufferObject;
+GLuint fullScreenVAO;
+GLuint fullScreenVBO;
+GLuint fullScreenShaderProgram;
+
+const int FRAME_BUFFER_WIDTH=640;
+const int FRAME_BUFFER_HEIGHT=480;
+
+void createFramebuffer(){
+  //Create Texture Object
+  glActiveTexture(GL_TEXTURE0);
+  glGenTextures(1,	&FBOTexture);
+  glBindTexture(GL_TEXTURE_2D,	FBOTexture);
+  // Texture Object setup
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,	GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,	GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,	GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,	GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D,	0,	GL_RGBA,
+               FRAME_BUFFER_WIDTH,
+               FRAME_BUFFER_HEIGHT,
+               0,	GL_RGBA,
+               GL_UNSIGNED_BYTE,	NULL);
+  
+  //creating depthbuffer
+  glGenRenderbuffers(1,	&FBODepthBuffer);
+  glBindRenderbuffer(GL_RENDERBUFFER,FBODepthBuffer);
+  glRenderbufferStorage(GL_RENDERBUFFER,GL_DEPTH_COMPONENT32,
+                        FRAME_BUFFER_WIDTH,
+                        FRAME_BUFFER_HEIGHT);
+  glBindRenderbuffer(GL_RENDERBUFFER,	0);
+  
+  //creating framebuffer
+  glGenFramebuffers(1,	&frameBufferObject);
+  glBindFramebuffer(GL_FRAMEBUFFER,frameBufferObject);
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,	FBOTexture,	0);
+  
+  //framebuffer setup
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,	GL_RENDERBUFFER,FBODepthBuffer);
+  
+  //error testing
+  GLenum status;
+  if	((status	=glCheckFramebufferStatus(
+                                          GL_FRAMEBUFFER))	!=
+       GL_FRAMEBUFFER_COMPLETE)	{
+    cout <<	"Issue	with	Framebuffers"	<<endl;
+  }
+  
+  
+
+}
+void createFullscreenQuad(){
+  //create and bind a VAO
+  glGenVertexArrays(1, &fullScreenVAO);
+  glBindVertexArray(fullScreenVAO);
+  
+  //create and bind VBO
+  glGenBuffers(1, &fullScreenVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, fullScreenVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  //glBufferData(GL_ARRAY_BUFFER, sizeof(float), vertices, GL_STATIC_DRAW);
+  
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,0,0);
+  //glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float), NULL);
+  
+  GLuint vertexShaderProgram = 0;
+  string vsPath = ASSET_PATH + SHADER_PATH + "/simplePostPorcessVS.glsl";
+  vertexShaderProgram = loadShaderFromFile(vsPath, VERTEX_SHADER);
+  checkForCompilerErrors(vertexShaderProgram);
+  
+  GLuint fragmentShaderProgram = 0;
+  string fsPath = ASSET_PATH + SHADER_PATH + "/simplePostPorcessFS.glsl";
+  fragmentShaderProgram = loadShaderFromFile(fsPath, FRAGMENT_SHADER);
+  checkForCompilerErrors(fragmentShaderProgram);
+  
+  //create shader
+  fullScreenShaderProgram = glCreateProgram();
+  glAttachShader(fullScreenShaderProgram, vertexShaderProgram);
+  glAttachShader(fullScreenShaderProgram, fragmentShaderProgram);
+  
+  glBindAttribLocation(fullScreenShaderProgram, 0, "vertexPostion");
+  
+  glLinkProgram(fullScreenShaderProgram);
+  checkForLinkErrors(fullScreenShaderProgram);
+  
+  //now we can delete the VS & FS Programs
+  glDeleteShader(vertexShaderProgram);
+  glDeleteShader(fragmentShaderProgram);
+
+}
+void cleanUpFrameBuffer(){
+  glDeleteProgram(fullScreenShaderProgram);
+  glDeleteBuffers(1, &fullScreenVBO);
+  glDeleteVertexArrays(1, &fullScreenVAO);
+  glDeleteFramebuffers(1, &frameBufferObject);
+  glDeleteRenderbuffers(1, &FBODepthBuffer);
+  glDeleteTextures(1, &FBOTexture);
+
+}
+void renderScene(){
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  
+  //Set the clear colour(background)
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  //clear the colour and depth buffer
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  
+  glUseProgram(shaderProgram);
+  
+  //get the uniform loaction for the MVP
+  GLint MVPLocation = glGetUniformLocation(shaderProgram, "MVP");
+  glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
+  
+  //get the model matrix uniform
+  GLint modelLocation = glGetUniformLocation(shaderProgram, "Model");
+  glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(worldMatrix));
+  
+  GLint AMCLocation = glGetUniformLocation(shaderProgram, "ambientMaterialColour");
+  glUniform4fv(AMCLocation, 1,  glm::value_ptr(materialData.ambientColour));
+  
+  GLint ALCLocation = glGetUniformLocation(shaderProgram, "ambientLightColour");
+  glUniform4fv(ALCLocation, 1,  glm::value_ptr(lightData.ambientColour));
+  
+  GLint lightDirLocation = glGetUniformLocation(shaderProgram, "lightDirection");
+  glUniform3fv(lightDirLocation, 1, value_ptr(lightData.direction));
+  
+  GLint DMCLocation = glGetUniformLocation(shaderProgram, "diffuseMaterialColour");
+  glUniform4fv(DMCLocation, 1,  glm::value_ptr(materialData.diffuseColour));
+  
+  GLint DLCLocation = glGetUniformLocation(shaderProgram, "diffuseLightColour");
+  glUniform4fv(DLCLocation, 1,  glm::value_ptr(lightData.diffuseColour));
+  
+  GLint SMCLocation = glGetUniformLocation(shaderProgram, "specularMaterialColour");
+  glUniform4fv(SMCLocation, 1,  glm::value_ptr(materialData.specularColour));
+  
+  GLint SLCLocation = glGetUniformLocation(shaderProgram, "specularLightColour");
+  glUniform4fv(SLCLocation, 1,  glm::value_ptr(lightData.specularColour));
+  
+  GLint SpecPowerLocation = glGetUniformLocation(shaderProgram, "specularPower");
+  glUniform1f(SpecPowerLocation, specularPower);
+  
+  
+  //get the uniform for the texture coords
+  GLint texture0Location = glGetUniformLocation(shaderProgram, "texture0");
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, diffuseMap);
+  glUniform1i(texture0Location, 0);
+  
+  glBindVertexArray(VAO);
+  glDrawElements(GL_TRIANGLES, currentMesh.getNumIndices(),
+                 GL_UNSIGNED_INT, 0);
+}
+void renderPostProcessing(){
+  glBindFramebuffer(GL_FRAMEBUFFER,0);
+  //Set the clear colour(background)
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  //clear buffers
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  
+  glUseProgram(fullScreenShaderProgram);
+  
+  //retrive the location of texture
+  GLint textureLocation = glGetUniformLocation(fullScreenShaderProgram, "texture0");
+  
+  
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, FBOTexture);
+  glUniform1i(textureLocation, 0);
+  
+  glBindVertexArray(fullScreenVAO);
+  
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  
+  
+}
 void initScene()
-{//load font
+{
+  createFramebuffer();
+  createFullscreenQuad();
+  //load font
   string modelPath = ASSET_PATH + MODEL_PATH + "/Utah-Teapot.fbx";
   loadFBXFromFile(modelPath, &currentMesh);
   string fontPath =ASSET_PATH + FONT_PATH + "/OratorStd.otf";
@@ -138,6 +323,7 @@ void initScene()
 
 void cleanUp()
 {
+  cleanUpFrameBuffer();
   glDeleteTextures(1,&fontTexture);
 	glDeleteTextures(1, &diffuseMap);
 	glDeleteProgram(shaderProgram);
@@ -173,57 +359,8 @@ void update()
 
 void render()
 {
-	//old imediate mode!
-	//Set the clear colour(background)
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	//clear the colour and depth buffer
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glUseProgram(shaderProgram);
-  
-  //get the uniform loaction for the MVP
-  GLint MVPLocation = glGetUniformLocation(shaderProgram, "MVP");
-  glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
-  
-  //get the model matrix uniform
-  GLint modelLocation = glGetUniformLocation(shaderProgram, "Model");
-  glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(worldMatrix));
-  
-  GLint AMCLocation = glGetUniformLocation(shaderProgram, "ambientMaterialColour");
-  glUniform4fv(AMCLocation, 1,  glm::value_ptr(materialData.ambientColour));
-  
-  GLint ALCLocation = glGetUniformLocation(shaderProgram, "ambientLightColour");
-  glUniform4fv(ALCLocation, 1,  glm::value_ptr(lightData.ambientColour));
-  
-  GLint lightDirLocation = glGetUniformLocation(shaderProgram, "lightDirection");
-  glUniform3fv(lightDirLocation, 1, value_ptr(lightData.direction));
-	
-  GLint DMCLocation = glGetUniformLocation(shaderProgram, "diffuseMaterialColour");
-    glUniform4fv(DMCLocation, 1,  glm::value_ptr(materialData.diffuseColour));
-  
-  GLint DLCLocation = glGetUniformLocation(shaderProgram, "diffuseLightColour");
-   glUniform4fv(DLCLocation, 1,  glm::value_ptr(lightData.diffuseColour));
-  
-  GLint SMCLocation = glGetUniformLocation(shaderProgram, "specularMaterialColour");
-  glUniform4fv(SMCLocation, 1,  glm::value_ptr(materialData.specularColour));
-  
-  GLint SLCLocation = glGetUniformLocation(shaderProgram, "specularLightColour");
-  glUniform4fv(SLCLocation, 1,  glm::value_ptr(lightData.specularColour));
-  
-  GLint SpecPowerLocation = glGetUniformLocation(shaderProgram, "specularPower");
-  glUniform1f(SpecPowerLocation, specularPower);
-
-	
-  //get the uniform for the texture coords
-  /*GLint texture0Location = glGetUniformLocation(shaderProgram, "texture0");
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, diffuseMap);
-  glUniform1i(texture0Location, 0);
-*/
-	glBindVertexArray(VAO);
-  glDrawElements(GL_TRIANGLES, currentMesh.getNumIndices(),
-                 GL_UNSIGNED_INT, 0);
-
+  renderScene();
+  renderPostProcessing();
 	
 }
 
@@ -317,19 +454,19 @@ int main(int argc, char * arg[])
             rotationAngle.z += 1.0f;
           break;
         case SDLK_a:
-            rotationAngle.z += -1.0f;
+            rotationAngle.z -= 1.0f;
           break;
         case SDLK_q:
             rotationAngle.y += 1.0f;
           break;
         case SDLK_e:
-            rotationAngle.y += -1.0f;
+            rotationAngle.y -= 1.0f;
           break;
         case SDLK_w:
             rotationAngle.x += 1.0f;
           break;
         case SDLK_s:
-            rotationAngle.x += -1.0f;
+            rotationAngle.x -= 1.0f;
           break;
 				default:
 					break;
