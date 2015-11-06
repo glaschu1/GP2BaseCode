@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8)
 project (GP2BaseCode)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -ftest-coverage -fprofile-arcs")
+list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
 find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
