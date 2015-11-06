@@ -46,7 +46,7 @@ GLuint frameBufferObject;
 GLuint fullScreenVAO;
 GLuint fullScreenVBO;
 GLuint fullScreenShaderProgram;
-
+vec2 screenResolution={640.0f,480.0f};
 const int FRAME_BUFFER_WIDTH=640;
 const int FRAME_BUFFER_HEIGHT=480;
 
@@ -236,11 +236,10 @@ void renderScene(){
   GLint SpecPowerLocation = glGetUniformLocation(shaderProgram, "specularPower");
   glUniform1f(SpecPowerLocation, specularPower);
   
-  GLint pptime = glGetUniformLocation(shaderProgram, "time");
-  glUniform1f(ppresolution, specularPower);
+ 
   
-  GLint ppresolution = glGetUniformLocation(shaderProgram, "specularPower");
-  glUniform1f(ppresolution, specularPower);
+  
+
   
   //get the uniform for the texture coords
   GLint texture0Location = glGetUniformLocation(shaderProgram, "texture0");
@@ -263,7 +262,14 @@ void renderPostProcessing(){
   
   //retrive the location of texture
   GLint textureLocation = glGetUniformLocation(fullScreenShaderProgram, "texture0");
+ 
+  GLint timeLocation=glGetUniformLocation(fullScreenShaderProgram,"time");
   
+  glUniform1f(timeLocation,totalTime);
+  
+  GLint ppresolution = glGetUniformLocation(shaderProgram, "resolution");
+  glUniform2fv(ppresolution, 1,  glm::value_ptr(screenResolution));
+
   
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, FBOTexture);
