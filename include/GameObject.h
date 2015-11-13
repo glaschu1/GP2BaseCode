@@ -18,6 +18,9 @@ public:
   void update();
   void createBuffer(Vertex *pVerts,int numVerts, int *pIndices,int numIndices);
   void loadShader(const string& vsFileName,const string& fsFileName);
+  GLuint getShaderPrograming(){
+                               return m_shaderProgram;
+  }
 private:
   GLuint m_VBO;
   GLuint m_EBO;

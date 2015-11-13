@@ -6,7 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
-
+#include <memory>
 using namespace std;
 
 #include <GL/glew.h>

@@ -8,7 +8,9 @@
 #include "FBXLoader.h"
 #include "Light.h"
 #include "Material.h"
-
+#include "GameObject.h"
+#include "Cube.h"
+shared_ptr<GameObject>gameObject;
 
 vec3 rotationAngle = {0.0f, 0.0f, 0.0f};
 
@@ -284,92 +286,13 @@ void renderPostProcessing(){
 void initScene()
 {
   createFramebuffer();
-  //createFullscreenQuad();
-  //load font
-  string modelPath = ASSET_PATH + MODEL_PATH + "/Utah-Teapot.fbx";
-  loadFBXFromFile(modelPath, &currentMesh);
-  string fontPath =ASSET_PATH + FONT_PATH + "/OratorStd.otf";
-  fontTexture=loadTextureFromFont(fontPath,18,"Hello world");
-  
-  glBindTexture(GL_TEXTURE_2D, fontTexture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-  
-	
-  
-  //load texture & bind
-	string texturePath = ASSET_PATH + TEXTURE_PATH + "/texture.png";
-	diffuseMap = loadTextureFromFile(texturePath);
-	glBindTexture(GL_TEXTURE_2D, diffuseMap);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	glGenerateMipmap(GL_TEXTURE_2D);
+  gameObject=shared_ptr<GameObject>(new GameObject);
+  gameObject->createBuffer(cubeVerts, 8, cubeIndices, 36);
+  sting vsPath =ASSET_PATH +SHADER_PATH+"/simpleVS.glsl";
+  gameObject=shared_ptr<GameObject>(new GameObject);
 
-	//Generate Vertex Array
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  
-  glBufferData(GL_ARRAY_BUFFER, currentMesh.getNumVerts()*sizeof(Vertex),
-               &currentMesh.vertices[0], GL_STATIC_DRAW);
-
-	//create buffer
-	glGenBuffers(1, &EBO);
-	//Make the EBO active
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	//Copy Index data to the EBO
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               currentMesh.getNumIndices()*sizeof(int),
-               &currentMesh.indices[0], GL_STATIC_DRAW);
-	
-
-	//Tell the shader that 0 is the position element
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
-
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void**)(sizeof(vec3)));
-
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void**)(sizeof(vec3) + sizeof(vec4)));
-  
-  //send the normals to the buffer
-  glEnableVertexAttribArray(3);
-  glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void**)(sizeof(vec3) + sizeof(vec4) + sizeof(vec2)));
-
-
-	GLuint vertexShaderProgram = 0;
-	string vsPath = ASSET_PATH + SHADER_PATH + "/specularVS.glsl";//ambient
-	vertexShaderProgram = loadShaderFromFile(vsPath, VERTEX_SHADER);
-	checkForCompilerErrors(vertexShaderProgram);
-
-	GLuint fragmentShaderProgram = 0;
-	string fsPath = ASSET_PATH + SHADER_PATH + "/specularFS.glsl";//
-	fragmentShaderProgram = loadShaderFromFile(fsPath, FRAGMENT_SHADER);
-	checkForCompilerErrors(fragmentShaderProgram);
-
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShaderProgram);
-	glAttachShader(shaderProgram, fragmentShaderProgram);
-
-	//Link attributes
-	glBindAttribLocation(shaderProgram, 0, "vertexPosition");
-	glBindAttribLocation(shaderProgram, 1, "vertexColour");
-	glBindAttribLocation(shaderProgram, 2, "vertexTexCoords");
-  glBindAttribLocation(shaderProgram, 3, "vertexNormal");
-
-	glLinkProgram(shaderProgram);
-	checkForLinkErrors(shaderProgram);
-	//now we can delete the VS & FS Programs
-	glDeleteShader(vertexShaderProgram);
-	glDeleteShader(fragmentShaderProgram);
-  
+  string fsPath = ASSET_PATH + SHADER_PATH + "/simpleFS.glsl";
+  gameObject->loadShader(vsPath, fsPath);
   //init material
   lightData.direction = vec3(0.0f, 0.0f, 1.0f);
   lightData.ambientColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -417,7 +340,7 @@ void update()
 
 	viewMatrix = glm::lookAt(vec3(cameraPosition), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 
-	worldMatrix = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f));
+	gameObject->update();
 
 	MVPMatrix = projMatrix*viewMatrix*worldMatrix*rotationMatrix;
 }
