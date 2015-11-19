@@ -7,15 +7,13 @@
 #include <fstream>
 #include <vector>
 #include <memory>
-
 using namespace std;
 
 #include <GL/glew.h>
 #include <SDL.h>
 #include <SDL_Image.h>
-#include <SDL_ttf.h>
 #include <SDL_opengl.h>
-#include <fbxsdk.h>
+#include <SDL_ttf.h>
 
 //maths headers
 #include <glm/glm.hpp>
@@ -28,6 +26,7 @@ const string ASSET_PATH = "assets";
 const string SHADER_PATH = "/shaders";
 const string TEXTURE_PATH = "/textures";
 const string FONT_PATH = "/fonts";
-const string MODEL_PATH="/models";
+const string MODEL_PATH= "/models";
+
 
 #endif
