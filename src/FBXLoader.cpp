@@ -38,7 +38,7 @@ FbxString GetAttributeTypeName(FbxNodeAttribute::EType type) {
 
 shared_ptr<GameObject> loadFBXFromFile(const string& filename)
 {
-	shared_ptr<GameObject> gameObject = shared_ptr<GameObject>(new GameObject);
+	shared_ptr<GameObject> rootGameObject = shared_ptr<GameObject>(new GameObject);
   level = 0;
 	// Initialize the SDK manager. This object handles memory management.
 	FbxManager* lSdkManager = FbxManager::Create();
@@ -63,7 +63,7 @@ shared_ptr<GameObject> loadFBXFromFile(const string& filename)
 
 	FbxGeometryConverter lGeomConverter(lSdkManager);
 	lGeomConverter.Triangulate(lScene, /*replace*/true);
-	
+
 	// Print the nodes of the scene and their attributes recursively.
 	// Note that we are not printing the root node because it should
 	// not contain any attributes.
@@ -72,12 +72,12 @@ shared_ptr<GameObject> loadFBXFromFile(const string& filename)
 		cout << "Root Node " << lRootNode->GetName() << endl;
 		for (int i = 0; i < lRootNode->GetChildCount(); i++)
 		{
-			processNode(lRootNode->GetChild(i), gameObject);
+			processNode(lRootNode->GetChild(i), rootGameObject);
 		}
 	}
 
 	lImporter->Destroy();
-	return gameObject;
+	return rootGameObject;
 }
 
 void processNode(FbxNode *node, shared_ptr<GameObject> parent)

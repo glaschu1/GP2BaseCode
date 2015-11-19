@@ -2,7 +2,6 @@
 #define FBXLoader_H
 
 #include "Common.h"
-#include "Mesh.h"
 #include "Vertices.h"
 #include "GameObject.h"
 #include <fbxsdk.h>
