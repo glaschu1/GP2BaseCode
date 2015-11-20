@@ -123,13 +123,13 @@ void initScene()
 	currentTicks=SDL_GetTicks();
 	totalTime=0.0f;
 	createFramebuffer();
-	string modelPath = ASSET_PATH + MODEL_PATH + "/utah-teapot.fbx";
+	string modelPath = ASSET_PATH + MODEL_PATH + "/sphere-highpoly.fbx";
 	auto currentGameObject = loadFBXFromFile(modelPath);
 
 	string vsPath = ASSET_PATH + SHADER_PATH + "/specularVS.glsl";
 	string fsPath = ASSET_PATH + SHADER_PATH + "/specularFS.glsl";
 	currentGameObject->loadShader(vsPath, fsPath);
-	currentGameObject->setScale(vec3(0.3f, 0.3f, 0.3f));
+	currentGameObject->setScale(vec3(10.1f, 10.0f, 10.0f));
 
 	gameObjects.push_back(currentGameObject);
 

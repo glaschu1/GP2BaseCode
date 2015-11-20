@@ -53,7 +53,7 @@ shared_ptr<GameObject> loadFBXFromFile(const string& filename)
 	// Create a new scene so that it can be populated by the imported file.
 	if (!lImporter->Initialize(filename.c_str(), -1, lSdkManager->GetIOSettings()))
 	{
-		return gameObject;
+		return rootGameObject;
 	}
 
 	// Create a new scene so that it can be populated by the imported file.
