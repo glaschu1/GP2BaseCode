@@ -20,6 +20,9 @@ GameObject::GameObject()
 	m_DiffuseMaterial=vec4(0.8f,0.8f,0.8f,1.0f);
 	m_SpecularMaterial=vec4(1.0f,1.0f,1.0f,1.0f);
 	m_SpecularPower=25.0f;
+  
+  m_ChildGameObjects.clear();
+  m_ParentGameObject=NULL;
 }
 
 GameObject::~GameObject()
@@ -33,6 +36,11 @@ GameObject::~GameObject()
 
 void GameObject::update()
 {
+  mat4 parentModel(1.0f);
+  if(m_ParentGameObject){
+    parentModel=m_ParentGameObject->getModelMatrix();
+  };
+  
 	mat4 translationMatrix = translate(mat4(1.0f), m_Position);
 	mat4 scaleMatrix = scale(mat4(1.0f), m_Scale);
 
@@ -41,7 +49,12 @@ void GameObject::update()
 		rotate(mat4(1.0f), m_Rotation.z, vec3(0.0f, 0.0f, 1.0f));
 
 	m_ModelMatrix = scaleMatrix*rotationMatrix*translationMatrix;
+  m_ModelMatrix=parentModel*m_ModelMatrix;
+  for(auto count=m_ChildGameObjects.begin();count !=m_ChildGameObjects.end();count++){
+    (*count)->update();
+  }
 }
+
 
 void GameObject::createBuffers(Vertex * pVerts, int numVerts, int *pIndices, int numIndices)
 {
